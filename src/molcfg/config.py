@@ -4,10 +4,63 @@ from __future__ import annotations
 
 import copy
 import json
+import tomllib
 from collections.abc import Callable
+from pathlib import Path
 from typing import Any
 
 from molcfg.errors import ConfigError, FrozenConfigError
+
+# ---------------------------------------------------------------------------
+# TOML serialization helpers
+# ---------------------------------------------------------------------------
+
+
+def _toml_value(value: Any) -> str:
+    """Format a Python scalar as a TOML value string."""
+    # bool must come before int — isinstance(True, int) is True
+    if isinstance(value, bool):
+        return "true" if value else "false"
+    if isinstance(value, int):
+        return str(value)
+    if isinstance(value, float):
+        return repr(value)
+    if isinstance(value, str):
+        return json.dumps(value)
+    if isinstance(value, (list, tuple)):
+        return "[" + ", ".join(_toml_value(v) for v in value) + "]"
+    raise TypeError(f"Cannot serialize {type(value).__name__!r} to TOML")
+
+
+def _collect_toml(data: dict[str, Any], prefix: str, out: list[str]) -> None:
+    """Recursively append TOML lines from *data* into *out*.
+
+    Scalars are emitted first; nested dicts become ``[section]`` headers.
+    """
+    deferred: list[tuple[str, dict[str, Any]]] = []
+    for key, val in data.items():
+        if val is None:
+            continue
+        if isinstance(val, dict):
+            deferred.append((key, val))
+        else:
+            out.append(f"{key} = {_toml_value(val)}")
+    for key, sub in deferred:
+        path = f"{prefix}.{key}" if prefix else key
+        out.append("")
+        out.append(f"[{path}]")
+        _collect_toml(sub, path, out)
+
+
+def _dict_to_toml(data: dict[str, Any]) -> str:
+    """Convert a plain dict to a TOML-formatted string."""
+    out: list[str] = []
+    _collect_toml(data, "", out)
+    # Strip any leading blank lines produced by the first subsection
+    while out and out[0] == "":
+        out.pop(0)
+    result = "\n".join(out)
+    return result + "\n" if result else ""
 
 
 class Config:
@@ -221,6 +274,34 @@ class Config:
         for cb in self._callbacks:
             cb(key, new_value, old_value)
 
+    # -- class-level loaders --
+
+    @classmethod
+    def load_json(cls, path: str | Path) -> "Config":
+        """Load a JSON file and return a :class:`Config`.
+
+        This is a convenience shortcut — source tracking is not recorded.
+        For layered loading with provenance, use
+        :class:`~molcfg.ConfigLoader` with a
+        :class:`~molcfg.JsonFileSource` instead.
+        """
+        data = json.loads(Path(path).read_text(encoding="utf-8"))
+        if not isinstance(data, dict):
+            raise ConfigError("JSON file must contain a top-level object")
+        return cls(data)
+
+    @classmethod
+    def load_toml(cls, path: str | Path) -> "Config":
+        """Load a TOML file and return a :class:`Config`.
+
+        This is a convenience shortcut — source tracking is not recorded.
+        For layered loading with provenance, use
+        :class:`~molcfg.ConfigLoader` with a
+        :class:`~molcfg.TomlFileSource` instead.
+        """
+        data = tomllib.loads(Path(path).read_text(encoding="utf-8"))
+        return cls(data)
+
     # -- serialization --
 
     def to_dict(self) -> dict[str, Any]:
@@ -231,6 +312,18 @@ class Config:
 
     def to_json(self, **kwargs: Any) -> str:
         return json.dumps(self.to_dict(), **kwargs)
+
+    def to_toml(self) -> str:
+        """Serialize the config to a TOML-formatted string."""
+        return _dict_to_toml(self.to_dict())
+
+    def save_json(self, path: str | Path, **kwargs: Any) -> None:
+        """Write the config as JSON to *path*."""
+        Path(path).write_text(self.to_json(**kwargs), encoding="utf-8")
+
+    def save_toml(self, path: str | Path) -> None:
+        """Write the config as TOML to *path*."""
+        Path(path).write_text(self.to_toml(), encoding="utf-8")
 
     def meta(self, path: str = "") -> dict[str, Any] | None:
         absolute_path = self._full_path(path)
