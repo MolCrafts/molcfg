@@ -197,6 +197,63 @@ class TestSerialization:
         j = cfg.to_json(sort_keys=True)
         assert json.loads(j) == {"name": "test", "count": 3}
 
+    def test_to_toml_scalars(self):
+        cfg = Config({"name": "test", "count": 3, "flag": True})
+        toml_str = cfg.to_toml()
+        assert 'name = "test"' in toml_str
+        assert "count = 3" in toml_str
+        assert "flag = true" in toml_str
+
+    def test_to_toml_nested(self):
+        cfg = Config({"db": {"host": "localhost", "port": 5432}})
+        toml_str = cfg.to_toml()
+        assert "[db]" in toml_str
+        assert 'host = "localhost"' in toml_str
+        assert "port = 5432" in toml_str
+
+    def test_to_toml_list(self):
+        cfg = Config({"tags": ["a", "b", "c"]})
+        toml_str = cfg.to_toml()
+        assert 'tags = ["a", "b", "c"]' in toml_str
+
+    def test_to_toml_skips_none(self):
+        cfg = Config({"name": "test", "opt": None})
+        toml_str = cfg.to_toml()
+        assert "opt" not in toml_str
+
+    def test_save_and_load_json_roundtrip(self, tmp_path):
+        cfg = Config({"db": {"host": "localhost", "port": 5432}, "debug": False})
+        path = tmp_path / "cfg.json"
+        cfg.save_json(path)
+        loaded = Config.load_json(path)
+        assert loaded.to_dict() == cfg.to_dict()
+
+    def test_save_and_load_toml_roundtrip(self, tmp_path):
+        cfg = Config({"db": {"host": "localhost", "port": 5432}, "debug": False})
+        path = tmp_path / "cfg.toml"
+        cfg.save_toml(path)
+        loaded = Config.load_toml(path)
+        assert loaded.to_dict() == cfg.to_dict()
+
+    def test_load_json_invalid_raises(self, tmp_path):
+        from molcfg.errors import ConfigError
+        path = tmp_path / "bad.json"
+        path.write_text("[1, 2, 3]")  # JSON array, not an object
+        with pytest.raises(ConfigError):
+            Config.load_json(path)
+
+    def test_save_json_creates_file(self, tmp_path):
+        cfg = Config({"x": 1})
+        path = tmp_path / "out.json"
+        cfg.save_json(path)
+        assert path.exists()
+
+    def test_save_toml_creates_file(self, tmp_path):
+        cfg = Config({"x": 1})
+        path = tmp_path / "out.toml"
+        cfg.save_toml(path)
+        assert path.exists()
+
 
 class TestDunderMethods:
     def test_repr(self):
