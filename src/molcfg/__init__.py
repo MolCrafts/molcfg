@@ -1,4 +1,4 @@
-"""molcfg — zero-dependency configuration library for the molcrafts ecosystem."""
+"""molcfg — configuration library for the molcrafts ecosystem."""
 
 from molcfg.concurrency import FileLock, ThreadSafeConfig, interpolate
 from molcfg.config import Config
@@ -16,6 +16,7 @@ from molcfg.source import (
     JsonFileSource,
     Source,
     TomlFileSource,
+    YamlFileSource,
 )
 from molcfg.validation import Length, OneOf, Pattern, Range, validate
 
@@ -34,6 +35,7 @@ __all__ = [
     "EnvSource",
     "JsonFileSource",
     "TomlFileSource",
+    "YamlFileSource",
     # Merge
     "ConfigLoader",
     "MergeStrategy",
