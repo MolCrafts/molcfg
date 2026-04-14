@@ -1,7 +1,7 @@
 [project]
 site_name = "molcrafts-molcfg"
 site_url = "https://github.com/MolCrafts/molcfg/tree/master/docs"
-site_description = "Zero-dependency configuration library for predictable loading, merging, validation, and source tracking."
+site_description = "Configuration library for predictable loading, merging, validation, and source tracking."
 site_author = "Roy Kid"
 copyright = "&copy; 2026 Roy Kid"
 docs_dir = "docs"

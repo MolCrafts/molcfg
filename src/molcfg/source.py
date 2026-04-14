@@ -10,6 +10,8 @@ import tomllib
 from abc import ABC, abstractmethod
 from typing import Any
 
+import yaml
+
 _INT_RE = re.compile(r"[+-]?\d+")
 _FLOAT_RE = re.compile(
     r"""
@@ -71,6 +73,23 @@ class TomlFileSource(Source):
     def load(self) -> dict[str, Any]:
         with open(self._path, "rb") as f:
             return tomllib.load(f)
+
+
+class YamlFileSource(Source):
+    """Source that loads configuration from a YAML file."""
+
+    def __init__(self, path: str | os.PathLike[str], name: str | None = None) -> None:
+        self._path = path
+        self._name = name or self.__class__.__name__
+
+    def load(self) -> dict[str, Any]:
+        with open(self._path, "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+        if data is None:
+            return {}
+        if not isinstance(data, dict):
+            raise TypeError(f"YAML root must be a mapping, got {type(data).__name__}")
+        return data
 
 
 class EnvSource(Source):

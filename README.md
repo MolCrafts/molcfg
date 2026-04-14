@@ -6,7 +6,7 @@
 [![Python](https://img.shields.io/badge/python-3.12%2B-3776AB.svg?logo=python&logoColor=white)](./pyproject.toml)
 [![License](https://img.shields.io/badge/license-BSD--3--Clause-16A34A.svg)](./LICENSE)
 
-Zero-dependency configuration library for Python.
+Configuration library for Python — layered sources, profiles, validation, and source tracking.
 
 ## Quick Start
 

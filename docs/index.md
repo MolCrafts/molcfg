@@ -1,6 +1,6 @@
 # molcfg
 
-Zero-dependency Python configuration library for services, CLIs, and internal tooling that need predictable loading, merging, and validation without a heavy runtime.
+Python configuration library for services, CLIs, and internal tooling that need predictable loading, merging, and validation.
 
 [Get started](getting-started.md){ .md-button .md-button--primary }
 [API reference](api.md){ .md-button }

@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.0] - 2026-04-13
+
+### Added
+
+- `YamlFileSource` for loading configuration from YAML files.
+
+### Changed
+
+- PyYAML is now a required runtime dependency (previously molcfg had no runtime dependencies).
+- Dropped the "zero-dependency" framing from the package description and docs.
+
 ## [1.0.0] - 2026-04-11
 
 ### Added
