@@ -147,6 +147,50 @@ OneOf(*choices)
 
 Attach via `__constraints__ = {"field": [constraint, ...]}` on the schema class.
 
+### Build
+
+```python
+Build(registry: Registry)
+```
+
+`typing.Annotated` metadata marker. When `validate()` encounters
+`field: Annotated[T, Build(reg)]`, the raw value is passed through
+`reg.build(...)` before the field's type is checked. Works on default
+values too.
+
+---
+
+## Registry
+
+```python
+Registry(name: str, *, discriminator: str = "type")
+```
+
+String-tag → factory container. Generic: `Registry[T]("name")`.
+
+### Registration
+
+```python
+reg.register("silu", nn.SiLU)     # direct
+@reg("leaky_relu")                # decorator
+class MyLeakyReLU(nn.Module): ...
+```
+
+Keys are lowercased. Duplicate registration raises `ValueError`.
+
+### Access
+
+- `reg.build(spec) -> T | None` — resolve into an instance. Accepts
+  `str` (short form), `dict` with a `type` key + kwargs (long form),
+  `None` (pass-through), or an existing instance (idempotent).
+- `reg.get(name) -> type[T] | callable | None` — return the registered
+  factory/class without instantiating. `None` pass-through. For APIs
+  that take `type[T]` and construct later.
+- `reg.keys() -> list[str]` — sorted list of registered keys.
+- `"key" in reg` — containment check (case-insensitive).
+
+See the [Registry guide](registry.md) for the full tutorial.
+
 ---
 
 ## Concurrency

@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] - 2026-04-18
+
+### Added
+
+- `Registry[T]` — a tag-to-factory container mapping string keys (e.g. `"silu"`) to classes or callables, with three access modes:
+  - `registry.build(spec)` resolves a config value into an instance. Accepts `str` (short form), `dict` with a `type` discriminator plus kwargs (long form), `None`, or an existing instance (idempotent).
+  - `registry.get(name)` returns the raw factory/class without instantiating — for APIs that take `type[T]` (e.g. PyTorch modules).
+  - `registry.register(key, factory)` or the `@registry("key")` decorator form.
+- `Build(registry)` — `typing.Annotated` metadata marker that runs `registry.build(...)` on a field before type validation. Works uniformly across JSON, TOML, and YAML sources, and on default values.
+- `docs/registry.md` guide and `docs/examples` section covering short/long forms, `.get()` vs `.build()`, and integration with `validate()`.
+
+### Changed
+
+- `validate()` now calls `get_type_hints(schema, include_extras=True)` so `Annotated` metadata is preserved for the new `Build` marker.
+
 ## [1.2.0] - 2026-04-13
 
 ### Added

@@ -9,6 +9,7 @@ from molcfg.errors import (
     ValidationError,
 )
 from molcfg.merge import ConfigLoader, MergeStrategy, ProfileLoader, merge
+from molcfg.registry import Registry
 from molcfg.source import (
     CliSource,
     DictSource,
@@ -18,7 +19,7 @@ from molcfg.source import (
     TomlFileSource,
     YamlFileSource,
 )
-from molcfg.validation import Length, OneOf, Pattern, Range, validate
+from molcfg.validation import Build, Length, OneOf, Pattern, Range, validate
 
 __all__ = [
     # Config
@@ -42,11 +43,14 @@ __all__ = [
     "ProfileLoader",
     "merge",
     # Validation
+    "Build",
     "Length",
     "OneOf",
     "Pattern",
     "Range",
     "validate",
+    # Registry
+    "Registry",
     # Concurrency
     "FileLock",
     "ThreadSafeConfig",
