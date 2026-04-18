@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.0] - 2026-04-18
+
+Release suite bump — no functional changes beyond 1.3.0.
+
 ## [1.3.0] - 2026-04-18
 
 ### Added
