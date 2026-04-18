@@ -62,9 +62,7 @@ class TestRegistryBuild:
         with pytest.raises(ValueError, match="'silux' not in"):
             activations.build("silux")
 
-    def test_unknown_key_error_lists_candidates(
-        self, activations: Registry
-    ) -> None:
+    def test_unknown_key_error_lists_candidates(self, activations: Registry) -> None:
         with pytest.raises(ValueError, match=r"gelu.*leaky_relu.*silu"):
             activations.build("silux")
 
@@ -247,9 +245,7 @@ class TestFileFormatRoundtrips:
 
     def test_json_long_form(self, tmp_path: Path) -> None:
         path = tmp_path / "c.json"
-        path.write_text(
-            '{"activation": {"type": "leaky_relu", "negative_slope": 0.25}}'
-        )
+        path.write_text('{"activation": {"type": "leaky_relu", "negative_slope": 0.25}}')
         cfg = Config.load_json(path)
         result = validate(cfg.to_dict(), ModelSchema, apply_defaults=True)
         assert isinstance(result["activation"], LeakyReLU)
@@ -264,11 +260,7 @@ class TestFileFormatRoundtrips:
 
     def test_toml_long_form(self, tmp_path: Path) -> None:
         path = tmp_path / "c.toml"
-        path.write_text(
-            "[activation]\n"
-            'type = "leaky_relu"\n'
-            "negative_slope = 0.15\n"
-        )
+        path.write_text('[activation]\ntype = "leaky_relu"\nnegative_slope = 0.15\n')
         cfg = Config.load_toml(path)
         result = validate(cfg.to_dict(), ModelSchema, apply_defaults=True)
         assert isinstance(result["activation"], LeakyReLU)
@@ -284,11 +276,7 @@ class TestFileFormatRoundtrips:
 
     def test_yaml_long_form(self, tmp_path: Path) -> None:
         path = tmp_path / "c.yaml"
-        path.write_text(
-            "activation:\n"
-            "  type: leaky_relu\n"
-            "  negative_slope: 0.05\n"
-        )
+        path.write_text("activation:\n  type: leaky_relu\n  negative_slope: 0.05\n")
         cfg = Config.load_yaml(path)
         result = validate(cfg.to_dict(), ModelSchema, apply_defaults=True)
         assert isinstance(result["activation"], LeakyReLU)

@@ -6,10 +6,10 @@ import copy
 import json
 import tomllib
 from collections.abc import Callable
-
-import yaml
 from pathlib import Path
 from typing import Any
+
+import yaml
 
 from molcfg.errors import ConfigError, FrozenConfigError
 

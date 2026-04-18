@@ -33,8 +33,7 @@ class Source(ABC):
         return getattr(self, "_name", self.__class__.__name__)
 
     @abstractmethod
-    def load(self) -> dict[str, Any]:
-        ...
+    def load(self) -> dict[str, Any]: ...
 
 
 class DictSource(Source):
@@ -124,7 +123,7 @@ class EnvSource(Source):
         for key, value in self._environ.items():
             if full_prefix and not key.startswith(full_prefix):
                 continue
-            stripped = key[len(full_prefix):] if full_prefix else key
+            stripped = key[len(full_prefix) :] if full_prefix else key
             parts = [p.lower() for p in stripped.split(self._separator)]
             current = result
             for part in parts[:-1]:
@@ -207,8 +206,10 @@ def _coerce_value(value: str) -> Any:
         return int(stripped)
     if _FLOAT_RE.fullmatch(stripped) and any(ch in stripped.lower() for ch in ".e"):
         return float(stripped)
-    if stripped.startswith("[") or stripped.startswith("{") or (
-        stripped.startswith('"') and stripped.endswith('"')
+    if (
+        stripped.startswith("[")
+        or stripped.startswith("{")
+        or (stripped.startswith('"') and stripped.endswith('"'))
     ):
         try:
             return json.loads(stripped)

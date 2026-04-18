@@ -237,6 +237,7 @@ class TestSerialization:
 
     def test_load_json_invalid_raises(self, tmp_path):
         from molcfg.errors import ConfigError
+
         path = tmp_path / "bad.json"
         path.write_text("[1, 2, 3]")  # JSON array, not an object
         with pytest.raises(ConfigError):
@@ -269,6 +270,7 @@ class TestSerialization:
 
     def test_load_yaml_invalid_raises(self, tmp_path):
         from molcfg.errors import ConfigError
+
         path = tmp_path / "bad.yaml"
         path.write_text("- 1\n- 2\n")  # YAML list, not a mapping
         with pytest.raises(ConfigError):

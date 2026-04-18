@@ -146,8 +146,7 @@ def _type_matches(value: Any, expected: Any) -> bool:
         args = typing.get_args(expected)
         if args and len(args) == 2:
             return all(
-                _type_matches(k, args[0]) and _type_matches(v, args[1])
-                for k, v in value.items()
+                _type_matches(k, args[0]) and _type_matches(v, args[1]) for k, v in value.items()
             )
         return True
 

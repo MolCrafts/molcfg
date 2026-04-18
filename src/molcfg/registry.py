@@ -46,18 +46,22 @@ class Registry(Generic[T]):
         a decorator ``@reg.register("silu")``.
         """
         if factory is None:
+
             def deco(f: Factory) -> Factory:
                 self._register(key, f)
                 return f
+
             return deco
         self._register(key, factory)
         return factory
 
     def __call__(self, key: str) -> Callable[[Factory], Factory]:
         """Decorator form: ``@reg("silu")``."""
+
         def deco(f: Factory) -> Factory:
             self._register(key, f)
             return f
+
         return deco
 
     def build(self, spec: Any) -> T | None:
@@ -97,9 +101,7 @@ class Registry(Generic[T]):
         try:
             return self._factories[_normalize_key(key)]
         except KeyError as exc:
-            raise ValueError(
-                f"registry={self.name!r}: {key!r} not in {self.keys()}"
-            ) from exc
+            raise ValueError(f"registry={self.name!r}: {key!r} not in {self.keys()}") from exc
 
     def keys(self) -> list[str]:
         """Sorted list of registered keys."""
@@ -111,16 +113,12 @@ class Registry(Generic[T]):
     def _register(self, key: str, factory: Factory) -> None:
         normalized = _normalize_key(key)
         if normalized in self._factories:
-            raise ValueError(
-                f"registry={self.name!r}: key {normalized!r} already registered"
-            )
+            raise ValueError(f"registry={self.name!r}: key {normalized!r} already registered")
         self._factories[normalized] = factory
 
     def _instantiate(self, key: str, kwargs: dict[str, Any]) -> T:
         try:
             factory = self._factories[_normalize_key(key)]
         except KeyError as exc:
-            raise ValueError(
-                f"registry={self.name!r}: {key!r} not in {self.keys()}"
-            ) from exc
+            raise ValueError(f"registry={self.name!r}: {key!r} not in {self.keys()}") from exc
         return factory(**kwargs)
