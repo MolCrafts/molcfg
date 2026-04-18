@@ -101,3 +101,23 @@ class ServerSchema:
 ```
 
 `validate()` checks constraints after type validation. `ValidationError` includes the field name and constraint that failed.
+
+## Resolving string tags into objects
+
+For fields whose config value is a string tag (e.g. `activation = "silu"`)
+but whose Python value should be a class or instance, use `Build` with a
+`Registry`. See the [Registry guide](registry.md) for details.
+
+```python
+from typing import Annotated
+from molcfg import Build, Registry, validate
+
+activations = Registry("activation")
+activations.register("silu", SiLU)
+
+class Schema:
+    activation: Annotated[SiLU, Build(activations)] = "silu"
+
+validate({"activation": "silu"}, Schema, apply_defaults=True)
+# {"activation": <SiLU instance>}
+```

@@ -42,12 +42,12 @@ The GitHub repository must also have an environment named `pypi`.
 6. Tag the release:
 
    ```bash
-   git tag v1.0.0
-   git push origin v1.0.0
+   git tag v1.3.0
+   git push origin v1.3.0
    ```
 
 7. Wait for the `Release` GitHub Actions workflow to publish the artifacts to PyPI via trusted publishing.
-8. Publish a GitHub release for the tag and paste the `1.0.0` changelog entry into the release notes.
+8. Publish a GitHub release for the tag and paste the matching changelog entry into the release notes.
 
 ## Documentation Release
 

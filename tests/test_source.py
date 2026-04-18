@@ -4,7 +4,14 @@ import json
 
 import pytest
 
-from molcfg import CliSource, DictSource, EnvSource, JsonFileSource, TomlFileSource
+from molcfg import (
+    CliSource,
+    DictSource,
+    EnvSource,
+    JsonFileSource,
+    TomlFileSource,
+    YamlFileSource,
+)
 
 
 class TestDictSource:
@@ -58,6 +65,29 @@ class TestTomlFileSource:
     def test_missing_file(self):
         with pytest.raises(FileNotFoundError):
             TomlFileSource("/nonexistent.toml").load()
+
+
+class TestYamlFileSource:
+    def test_load(self, tmp_path):
+        p = tmp_path / "cfg.yaml"
+        p.write_text("db:\n  host: localhost\n  port: 5432\n")
+        src = YamlFileSource(p)
+        assert src.load() == {"db": {"host": "localhost", "port": 5432}}
+
+    def test_empty_file(self, tmp_path):
+        p = tmp_path / "empty.yaml"
+        p.write_text("")
+        assert YamlFileSource(p).load() == {}
+
+    def test_missing_file(self):
+        with pytest.raises(FileNotFoundError):
+            YamlFileSource("/nonexistent.yaml").load()
+
+    def test_non_mapping_root(self, tmp_path):
+        p = tmp_path / "bad.yaml"
+        p.write_text("- 1\n- 2\n")
+        with pytest.raises(TypeError, match="mapping"):
+            YamlFileSource(p).load()
 
 
 class TestEnvSource:

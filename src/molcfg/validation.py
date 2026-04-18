@@ -6,9 +6,10 @@ import copy
 import re
 import types
 import typing
-from typing import Any, Literal, get_type_hints
+from typing import Annotated, Any, Literal, get_type_hints
 
 from molcfg.errors import ValidationError
+from molcfg.registry import Registry
 
 # -- Constraint descriptors --
 
@@ -76,7 +77,33 @@ class Length:
 type Constraint = Range | OneOf | Pattern | Length
 
 
+# -- Build marker (registry-driven deserialization) --
+
+
+class Build:
+    """``Annotated`` metadata that resolves a field through a ``Registry``.
+
+    Example:
+        ``activation: Annotated[nn.Module, Build(activations)] = "silu"``
+
+    When ``validate()`` encounters this field, the raw value (string, dict,
+    or already-built instance) is passed through ``registry.build(...)``
+    before the usual type check runs.
+    """
+
+    def __init__(self, registry: Registry) -> None:
+        self.registry = registry
+
+
 # -- Type checking engine --
+
+
+def _strip_annotated(tp: Any) -> tuple[Any, tuple[Any, ...]]:
+    """Return ``(base, metadata)`` for ``Annotated[X, *meta]``; pass-through otherwise."""
+    if typing.get_origin(tp) is Annotated:
+        args = typing.get_args(tp)
+        return args[0], args[1:]
+    return tp, ()
 
 
 def _type_matches(value: Any, expected: Any) -> bool:
@@ -119,8 +146,7 @@ def _type_matches(value: Any, expected: Any) -> bool:
         args = typing.get_args(expected)
         if args and len(args) == 2:
             return all(
-                _type_matches(k, args[0]) and _type_matches(v, args[1])
-                for k, v in value.items()
+                _type_matches(k, args[0]) and _type_matches(v, args[1]) for k, v in value.items()
             )
         return True
 
@@ -135,6 +161,21 @@ def _validate_value(
     allow_extra: bool,
     apply_defaults: bool,
 ) -> tuple[Any, list[str]]:
+    expected, metadata = _strip_annotated(expected)
+    build_marker = next((m for m in metadata if isinstance(m, Build)), None)
+    if build_marker is not None:
+        try:
+            value = build_marker.registry.build(value)
+        except ValueError as exc:
+            return value, [f"{path}: {exc}"]
+        # A Build marker yields an instance (or None), not a dict — skip the
+        # nested-schema recursion path and type-check directly.
+        if value is None and _type_is_optional(expected):
+            return value, []
+        if _type_matches(value, expected):
+            return value, []
+        return value, [f"{path}: expected {expected}, got {type(value).__name__}"]
+
     if value is None and _type_is_optional(expected):
         return value, []
 
@@ -229,7 +270,7 @@ def validate(
 
     Returns the validated data dict.  Raises ``ValidationError`` on failure.
     """
-    hints = get_type_hints(schema)
+    hints = get_type_hints(schema, include_extras=True)
     constraints: dict[str, list[Constraint]] = getattr(schema, "__constraints__", {})
     errors: list[str] = []
     validated: dict[str, Any] = {}
@@ -295,6 +336,7 @@ def validate(
 
 def _type_is_optional(tp: Any) -> bool:
     """Return True if tp allows None (e.g. int | None)."""
+    tp, _ = _strip_annotated(tp)
     origin = typing.get_origin(tp)
     if origin is types.UnionType or origin is typing.Union:
         return type(None) in typing.get_args(tp)

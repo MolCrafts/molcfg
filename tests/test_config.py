@@ -237,6 +237,7 @@ class TestSerialization:
 
     def test_load_json_invalid_raises(self, tmp_path):
         from molcfg.errors import ConfigError
+
         path = tmp_path / "bad.json"
         path.write_text("[1, 2, 3]")  # JSON array, not an object
         with pytest.raises(ConfigError):
@@ -252,6 +253,33 @@ class TestSerialization:
         cfg = Config({"x": 1})
         path = tmp_path / "out.toml"
         cfg.save_toml(path)
+        assert path.exists()
+
+    def test_to_yaml(self):
+        cfg = Config({"db": {"host": "localhost", "port": 5432}})
+        yaml_str = cfg.to_yaml()
+        assert "host: localhost" in yaml_str
+        assert "port: 5432" in yaml_str
+
+    def test_save_and_load_yaml_roundtrip(self, tmp_path):
+        cfg = Config({"db": {"host": "localhost", "port": 5432}, "debug": False})
+        path = tmp_path / "cfg.yaml"
+        cfg.save_yaml(path)
+        loaded = Config.load_yaml(path)
+        assert loaded.to_dict() == cfg.to_dict()
+
+    def test_load_yaml_invalid_raises(self, tmp_path):
+        from molcfg.errors import ConfigError
+
+        path = tmp_path / "bad.yaml"
+        path.write_text("- 1\n- 2\n")  # YAML list, not a mapping
+        with pytest.raises(ConfigError):
+            Config.load_yaml(path)
+
+    def test_save_yaml_creates_file(self, tmp_path):
+        cfg = Config({"x": 1})
+        path = tmp_path / "out.yaml"
+        cfg.save_yaml(path)
         assert path.exists()
 
 

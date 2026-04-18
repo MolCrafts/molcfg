@@ -9,6 +9,8 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
+import yaml
+
 from molcfg.errors import ConfigError, FrozenConfigError
 
 # ---------------------------------------------------------------------------
@@ -302,6 +304,22 @@ class Config:
         data = tomllib.loads(Path(path).read_text(encoding="utf-8"))
         return cls(data)
 
+    @classmethod
+    def load_yaml(cls, path: str | Path) -> "Config":
+        """Load a YAML file and return a :class:`Config`.
+
+        This is a convenience shortcut — source tracking is not recorded.
+        For layered loading with provenance, use
+        :class:`~molcfg.ConfigLoader` with a
+        :class:`~molcfg.YamlFileSource` instead.
+        """
+        data = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
+        if data is None:
+            data = {}
+        if not isinstance(data, dict):
+            raise ConfigError("YAML file must contain a top-level mapping")
+        return cls(data)
+
     # -- serialization --
 
     def to_dict(self) -> dict[str, Any]:
@@ -324,6 +342,14 @@ class Config:
     def save_toml(self, path: str | Path) -> None:
         """Write the config as TOML to *path*."""
         Path(path).write_text(self.to_toml(), encoding="utf-8")
+
+    def to_yaml(self, **kwargs: Any) -> str:
+        """Serialize the config to a YAML-formatted string."""
+        return yaml.dump(self.to_dict(), allow_unicode=True, **kwargs)
+
+    def save_yaml(self, path: str | Path, **kwargs: Any) -> None:
+        """Write the config as YAML to *path*."""
+        Path(path).write_text(self.to_yaml(**kwargs), encoding="utf-8")
 
     def meta(self, path: str = "") -> dict[str, Any] | None:
         absolute_path = self._full_path(path)

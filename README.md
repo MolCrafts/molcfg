@@ -6,7 +6,7 @@
 [![Python](https://img.shields.io/badge/python-3.12%2B-3776AB.svg?logo=python&logoColor=white)](./pyproject.toml)
 [![License](https://img.shields.io/badge/license-BSD--3--Clause-16A34A.svg)](./LICENSE)
 
-Zero-dependency configuration library for Python.
+Configuration library for Python — layered sources, profiles, validation, and source tracking.
 
 ## Quick Start
 
@@ -29,14 +29,14 @@ pip install molcrafts-molcfg
 
 ## Features
 
-- Layered loading from dicts, TOML/JSON files, environment variables, and CLI arguments
+- Layered loading from dicts, JSON/TOML/YAML files, environment variables, and CLI arguments
 - `DEEP_MERGE`, `OVERRIDE`, and `APPEND` strategies — all return isolated copies
 - Recursive schema validation with defaults, strict mode, and built-in constraints
+- `Registry` + `Build` to resolve config strings like `"silu"` into classes or instances
 - Source tracking via `Config.meta()` for every value
 - Attribute and dotted-path access, freeze, snapshot, and rollback
 - Thread-safe wrapper and POSIX file lock
 - `${path.to.key}` and `${env:VAR}` interpolation
-- No runtime dependencies
 
 ---
 

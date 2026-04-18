@@ -20,15 +20,21 @@ class TestFullPipeline:
     def test_load_merge_validate_freeze_read(self, tmp_path):
         # 1. Write a JSON config file
         json_path = tmp_path / "app.json"
-        json_path.write_text(json.dumps({
-            "db": {"host": "file-host", "port": 9999},
-        }))
+        json_path.write_text(
+            json.dumps(
+                {
+                    "db": {"host": "file-host", "port": 9999},
+                }
+            )
+        )
 
         # 2. Define sources: defaults → file override
-        defaults = DictSource({
-            "db": {"host": "localhost", "port": 5432, "name": "mydb"},
-            "app": {"debug": True},
-        })
+        defaults = DictSource(
+            {
+                "db": {"host": "localhost", "port": 5432, "name": "mydb"},
+                "app": {"debug": True},
+            }
+        )
         file_src = JsonFileSource(json_path)
 
         # 3. Load & merge
