@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.1] - 2026-05-11
+
+### Added
+- `project_config_dir(name, *, environ=None)` — resolves and creates
+  `~/.molcrafts/<name>/config/` so downstream tools (e.g. `molq` writing a SQLite
+  database) share a stable user-level configuration directory. `MOLCRAFTS_HOME`
+  overrides the base; empty / whitespace values fall back to the default. The
+  `environ` kwarg accepts an injected mapping for full isolation from
+  `os.environ` in tests.
+
 ## [1.4.0] - 2026-04-18
 
 Release suite bump — no functional changes beyond 1.3.0.
