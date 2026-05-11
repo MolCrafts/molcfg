@@ -9,6 +9,7 @@ from molcfg.errors import (
     ValidationError,
 )
 from molcfg.merge import ConfigLoader, MergeStrategy, ProfileLoader, merge
+from molcfg.paths import project_config_dir
 from molcfg.registry import Registry
 from molcfg.source import (
     CliSource,
@@ -55,4 +56,6 @@ __all__ = [
     "FileLock",
     "ThreadSafeConfig",
     "interpolate",
+    # Paths
+    "project_config_dir",
 ]
