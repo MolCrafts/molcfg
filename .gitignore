@@ -176,3 +176,9 @@ poetry.toml
 pyrightconfig.json
 
 # End of https://www.toptal.com/developers/gitignore/api/python
+
+# Claude Code per-machine state — committed harness lives in
+# CLAUDE.md, .claude/.agent/, and .claude/specs/. The two paths below
+# are runtime-local (permission overrides, scheduler lock).
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
