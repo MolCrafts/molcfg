@@ -2,15 +2,22 @@
 
 from __future__ import annotations
 
-import fcntl
 import os
 import re
+import sys
 import threading
 from collections.abc import Callable
 from typing import Any
 
 from molcfg.config import Config
 from molcfg.errors import CircularReferenceError
+
+# File locking is platform-specific: fcntl is POSIX-only, Windows uses msvcrt.
+# Pick the primitive at import so a missing module surfaces at load, not mid-lock.
+if sys.platform == "win32":
+    import msvcrt
+else:
+    import fcntl
 
 # -- Thread-safe wrapper --
 
@@ -128,7 +135,9 @@ class ThreadSafeConfig:
 
 
 class FileLock:
-    """POSIX file lock using ``fcntl.flock``.
+    """Cross-platform exclusive file lock.
+
+    Uses ``fcntl.flock`` on POSIX and ``msvcrt.locking`` on Windows.
 
     Usage::
 
@@ -143,13 +152,25 @@ class FileLock:
 
     def acquire(self) -> None:
         self._fd = os.open(self._path, os.O_CREAT | os.O_RDWR)
-        fcntl.flock(self._fd, fcntl.LOCK_EX)
+        if sys.platform == "win32":
+            # msvcrt locks a byte range from the current position; lock the first
+            # byte. LK_LOCK blocks (retrying ~10s) then raises OSError.
+            os.lseek(self._fd, 0, os.SEEK_SET)
+            msvcrt.locking(self._fd, msvcrt.LK_LOCK, 1)
+        else:
+            fcntl.flock(self._fd, fcntl.LOCK_EX)
 
     def release(self) -> None:
         if self._fd is not None:
-            fcntl.flock(self._fd, fcntl.LOCK_UN)
-            os.close(self._fd)
-            self._fd = None
+            try:
+                if sys.platform == "win32":
+                    os.lseek(self._fd, 0, os.SEEK_SET)
+                    msvcrt.locking(self._fd, msvcrt.LK_UNLCK, 1)
+                else:
+                    fcntl.flock(self._fd, fcntl.LOCK_UN)
+            finally:
+                os.close(self._fd)
+                self._fd = None
 
     def __enter__(self) -> FileLock:
         self.acquire()
