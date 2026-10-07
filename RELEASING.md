@@ -45,7 +45,10 @@ The GitHub repository must also have an environment named `pypi`.
    git push origin v1.3.0
    ```
 
-6. Wait for the `Release` GitHub Actions workflow to publish the artifacts to PyPI via trusted publishing.
+6. Wait for the `release` workflow: it re-runs lint and the tests on the tag,
+   checks the tag against `pyproject.toml`, builds, and publishes to PyPI via
+   trusted publishing. Run it by hand (`workflow_dispatch`) for a dry run that
+   builds without uploading.
 7. Publish a GitHub release for the tag; draft notes from `git log` since the
    previous tag. History lives in git and the GitHub release — this repo
    keeps neither a `CHANGELOG.md` nor a release-notes page.

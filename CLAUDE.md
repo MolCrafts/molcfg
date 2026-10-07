@@ -16,7 +16,7 @@ mol_project:
   science:
     required: false
   ci:
-    config: .github/workflows/ci.yml
+    config: .github/workflows/test.yml
     local: "ruff check . && ruff format --check . && pytest -q"
   notes_path: .claude/.agent/notes.md
   specs_path: .claude/specs/
@@ -97,6 +97,6 @@ pytest -q
 ty check src/
 ```
 
-CI runs the same on 3.12 / 3.13 / 3.14.
+CI: see "CI" in CONTRIBUTING.md (lint / test / docs / release workflows).
 
 <!-- mol-agent:bootstrap:managed end -->

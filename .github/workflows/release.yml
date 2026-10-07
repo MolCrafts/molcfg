@@ -1,35 +1,62 @@
-name: Release
+name: release
 
+# A v* tag re-runs lint and the tests on the tagged tree, checks the tag
+# against pyproject.toml, builds, and publishes to PyPI (trusted publishing,
+# MolCrafts only). workflow_dispatch is the dry run: everything but the upload.
 on:
   push:
-    tags:
-      - "v*"
+    tags: ["v*"]
   workflow_dispatch:
 
 permissions:
   contents: read
-  id-token: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  publish-pypi:
-    name: Publish to PyPI
-    if: startsWith(github.ref, 'refs/tags/v')
+  lint:
+    uses: ./.github/workflows/lint.yml
+
+  test:
+    uses: ./.github/workflows/test.yml
+
+  build:
+    name: release / build
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: ./.github/actions/setup-python
+      - name: Tag matches the packaged version
+        if: startsWith(github.ref, 'refs/tags/v')
+        run: |
+          version=$(uv version --short)
+          if [ "${GITHUB_REF_NAME#v}" != "$version" ]; then
+            echo "::error::tag ${GITHUB_REF_NAME} does not match pyproject version ${version}"
+            exit 1
+          fi
+      - run: uv build
+      - run: uvx twine check --strict dist/*
+      - uses: actions/upload-artifact@v7
+        with:
+          name: dist
+          path: dist/
+
+  pypi:
+    name: release / pypi
+    needs: build
+    if: github.repository_owner == 'MolCrafts' && startsWith(github.ref, 'refs/tags/v')
     runs-on: ubuntu-latest
     environment:
       name: pypi
       url: https://pypi.org/p/molcrafts-molcfg
-
+    permissions:
+      id-token: write
     steps:
-      - name: Check out repository
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/download-artifact@v8
         with:
-          python-version: "3.14"
-
-      - name: Build artifacts
-        run: pip install build && python -m build
-
-      - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+          name: dist
+          path: dist/
+      - uses: pypa/gh-action-pypi-publish@release/v1
