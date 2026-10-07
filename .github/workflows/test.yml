@@ -21,8 +21,9 @@ concurrency:
 jobs:
   pytest:
     name: test / py${{ matrix.python }} (${{ matrix.os }})
-    # A pull request from a branch of this same repository was already run by its push.
-    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository
+    # A pull request from a branch of this same repository runs only when its
+    # push ran the fast tier, i.e. when the head is a feature branch.
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name != github.repository || !contains(fromJSON('["dev","master","main"]'), github.head_ref)
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false

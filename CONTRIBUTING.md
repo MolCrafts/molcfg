@@ -33,8 +33,9 @@ zensical serve
 
 One workflow per kind of work. A *feature* ref is any branch other than
 `dev`/`master`/`main`; an *integration* ref is one of those, or a pull request
-into one. A pull request from a branch of this repository is not run twice:
-its push already ran.
+into one. A pull request from a branch of this repository does not re-run
+what its push already ran: lint and docs never, the full test tier only when
+the head is a feature branch (its push ran the fast tier).
 
 | workflow | feature branch (fork or MolCrafts) | integration ref (fork or MolCrafts) | MolCrafts only |
 |---|---|---|---|
