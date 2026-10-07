@@ -8,7 +8,7 @@
 <p><strong>Layered configuration for Python — predictable loading, merging, validation, and source tracking.</strong></p>
 
 <p>
-  <a href="https://github.com/MolCrafts/molcfg/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/MolCrafts/molcfg/ci.yml?style=flat-square&logo=githubactions&logoColor=white&label=CI" alt="CI"></a>
+  <a href="https://github.com/MolCrafts/molcfg/actions/workflows/test.yml"><img src="https://img.shields.io/github/actions/workflow/status/MolCrafts/molcfg/test.yml?style=flat-square&logo=githubactions&logoColor=white&label=CI" alt="CI"></a>
   <a href="https://pypi.org/project/molcrafts-molcfg/"><img src="https://img.shields.io/pypi/v/molcrafts-molcfg?style=flat-square&logo=pypi&logoColor=white&label=PyPI" alt="PyPI"></a>
   <a href="https://pypi.org/project/molcrafts-molcfg/"><img src="https://img.shields.io/pypi/pyversions/molcrafts-molcfg?style=flat-square&logo=python&logoColor=white" alt="Python"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-BSD--3--Clause-18432B?style=flat-square" alt="License"></a>
