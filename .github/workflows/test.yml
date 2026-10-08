@@ -1,6 +1,6 @@
 name: test
 
-# pytest in two tiers (`test / context` decides):
+# pytest in two tiers (`test / context` decides, through MolCrafts/molcrafts-ci/actions/ci-context):
 #
 #   fast  a feature-branch push to MolCrafts: Linux, Python 3.12.
 #   full  every push to a fork (proven before its pull request), dev, master
