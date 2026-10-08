@@ -22,6 +22,9 @@ class Range:
         self.max_val = max_val
 
     def check(self, value: Any, path: str) -> str | None:
+        # An optional field validates as None before its constraint runs.
+        if value is None:
+            return None
         if not isinstance(value, (int, float)):
             return f"{path}: expected numeric, got {type(value).__name__}"
         if value < self.min_val or value > self.max_val:
@@ -115,6 +118,10 @@ def _type_matches(value: Any, expected: Any) -> bool:
         if expected is type(None):
             return value is None
         if isinstance(expected, type):
+            # TOML and JSON have no separate int/float for a whole number.
+            # bool is an int, and it is not a float.
+            if expected is float and isinstance(value, int) and not isinstance(value, bool):
+                return True
             return isinstance(value, expected)
         return True
 

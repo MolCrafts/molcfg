@@ -22,6 +22,19 @@ class TestTypeValidation:
         with pytest.raises(ValidationError):
             validate({"port": "abc"}, Schema)
 
+    def test_float_accepts_int(self):
+        class Schema:
+            cutoff: float
+
+        validate({"cutoff": 8}, Schema)
+
+    def test_float_rejects_bool(self):
+        class Schema:
+            cutoff: float
+
+        with pytest.raises(ValidationError):
+            validate({"cutoff": True}, Schema)
+
     def test_optional_field_missing(self):
         class Schema:
             name: str | None
@@ -142,6 +155,13 @@ class TestConstraints:
 
         with pytest.raises(ValidationError, match="range"):
             validate({"port": 70000}, Schema)
+
+    def test_range_skips_none_on_an_optional_field(self):
+        class Schema:
+            cutoff: float | None
+            __constraints__ = {"cutoff": [Range(0, 10)]}
+
+        validate({"cutoff": None}, Schema)
 
     def test_oneof_pass(self):
         class Schema:
