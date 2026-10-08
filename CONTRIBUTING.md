@@ -32,7 +32,9 @@ zensical serve
 ## CI
 
 One workflow per kind of work; shared setup comes from
-`MolCrafts/molcrafts-ci/actions/<name>@master`. `test / tier` picks the tier:
+`MolCrafts/molcrafts-ci/actions/<name>@master`. Every workflow's first job,
+`<file> / context`, runs `MolCrafts/molcrafts-ci/actions/ci-context@master`,
+and the other jobs read its outputs. It picks the tier:
 the *fast* tier runs on a feature-branch push to MolCrafts; the *full* tier on
 every push to a fork (so a branch is proven before its pull request), on
 `dev`/`master`/`main` on MolCrafts, on pull requests, tags and dispatches. A
@@ -41,12 +43,12 @@ pull request inside a fork is skipped (its push already ran the full tier).
 | workflow | fast tier (feature branch on MolCrafts) | full tier (fork pushes, dev/master/main, PRs, tags) | MolCrafts only |
 |---|---|---|---|
 | `lint.yml` | `lint / hooks` (pre-commit stage, all files) | same | — |
-| `test.yml` | `test / tier`, `test / python (ubuntu-latest, 3.12)` | `test / tier`, `test / python ({ubuntu,macos,windows}-latest, {3.12,3.14})` | — |
+| `test.yml` | `test / context`, `test / python (ubuntu-latest, 3.12)` | `test / context`, `test / python ({ubuntu,macos,windows}-latest, {3.12,3.14})` | — |
 | `docs.yml` | `docs / build` (`zensical build --strict`) | same | deploy: Cloudflare Pages, outside Actions |
 | `release.yml` | — | — | `v*` tag: lint + test + `release / build` + `release / pypi`; `workflow_dispatch` = dry run (no upload) |
 
 The `protect-master` ruleset on `master` requires a pull request, blocks force
-pushes and deletion, and requires `test / tier` and the full-tier `lint /`, `test /` and `docs /` checks.
+pushes and deletion, and requires `test / context` and the full-tier `lint /`, `test /` and `docs /` checks.
 
 ## Change Expectations
 
