@@ -86,6 +86,14 @@ def test_default_environ_falls_back_to_os_environ(
     assert result.is_dir()
 
 
+def test_create_false_does_not_make_the_directory(tmp_path: Path) -> None:
+    result = project_config_dir("molq", environ={"HOME": str(tmp_path)}, create=False)
+
+    assert result == tmp_path / ".molcrafts" / "molq" / "config"
+    assert not result.exists()
+    assert not (tmp_path / ".molcrafts").exists()
+
+
 def test_re_exported_from_package() -> None:
     """ac-006: project_config_dir is importable from molcfg and listed in __all__."""
     assert "project_config_dir" in molcfg.__all__

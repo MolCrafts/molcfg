@@ -47,14 +47,27 @@ class DictSource(Source):
         return copy.deepcopy(self._data)
 
 
+def _missing_optional(path: str | os.PathLike[str], optional: bool) -> bool:
+    return optional and not os.path.isfile(path)
+
+
 class JsonFileSource(Source):
     """Source that loads configuration from a JSON file."""
 
-    def __init__(self, path: str | os.PathLike[str], name: str | None = None) -> None:
+    def __init__(
+        self,
+        path: str | os.PathLike[str],
+        name: str | None = None,
+        *,
+        optional: bool = False,
+    ) -> None:
         self._path = path
+        self._optional = optional
         self._name = name or self.__class__.__name__
 
     def load(self) -> dict[str, Any]:
+        if _missing_optional(self._path, self._optional):
+            return {}
         with open(self._path, "r", encoding="utf-8") as f:
             data = json.load(f)
         if not isinstance(data, dict):
@@ -65,11 +78,20 @@ class JsonFileSource(Source):
 class TomlFileSource(Source):
     """Source that loads configuration from a TOML file (read-only via tomllib)."""
 
-    def __init__(self, path: str | os.PathLike[str], name: str | None = None) -> None:
+    def __init__(
+        self,
+        path: str | os.PathLike[str],
+        name: str | None = None,
+        *,
+        optional: bool = False,
+    ) -> None:
         self._path = path
+        self._optional = optional
         self._name = name or self.__class__.__name__
 
     def load(self) -> dict[str, Any]:
+        if _missing_optional(self._path, self._optional):
+            return {}
         with open(self._path, "rb") as f:
             return tomllib.load(f)
 
@@ -77,11 +99,20 @@ class TomlFileSource(Source):
 class YamlFileSource(Source):
     """Source that loads configuration from a YAML file."""
 
-    def __init__(self, path: str | os.PathLike[str], name: str | None = None) -> None:
+    def __init__(
+        self,
+        path: str | os.PathLike[str],
+        name: str | None = None,
+        *,
+        optional: bool = False,
+    ) -> None:
         self._path = path
+        self._optional = optional
         self._name = name or self.__class__.__name__
 
     def load(self) -> dict[str, Any]:
+        if _missing_optional(self._path, self._optional):
+            return {}
         with open(self._path, "r", encoding="utf-8") as f:
             data = yaml.safe_load(f)
         if data is None:
