@@ -47,6 +47,9 @@ class TestJsonFileSource:
         with pytest.raises(FileNotFoundError):
             JsonFileSource("/nonexistent.json").load()
 
+    def test_optional_missing_file_is_empty(self):
+        assert JsonFileSource("/nonexistent.json", optional=True).load() == {}
+
     def test_non_object_root(self, tmp_path):
         p = tmp_path / "bad.json"
         p.write_text("[1, 2, 3]")
@@ -66,6 +69,9 @@ class TestTomlFileSource:
         with pytest.raises(FileNotFoundError):
             TomlFileSource("/nonexistent.toml").load()
 
+    def test_optional_missing_file_is_empty(self):
+        assert TomlFileSource("/nonexistent.toml", optional=True).load() == {}
+
 
 class TestYamlFileSource:
     def test_load(self, tmp_path):
@@ -82,6 +88,9 @@ class TestYamlFileSource:
     def test_missing_file(self):
         with pytest.raises(FileNotFoundError):
             YamlFileSource("/nonexistent.yaml").load()
+
+    def test_optional_missing_file_is_empty(self):
+        assert YamlFileSource("/nonexistent.yaml", optional=True).load() == {}
 
     def test_non_mapping_root(self, tmp_path):
         p = tmp_path / "bad.yaml"
