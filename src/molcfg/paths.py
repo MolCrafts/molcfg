@@ -1,8 +1,9 @@
 """Standard project paths for the molcrafts ecosystem.
 
-Provides :func:`project_config_dir`, which resolves and idempotently creates
+Provides :func:`project_config_dir`, which resolves
 ``~/.molcrafts/<name>/config/`` so downstream tools (e.g. ``molq`` writing a
-SQLite database) share a stable, user-level configuration directory.
+SQLite database) share a stable, user-level configuration directory. It
+creates that directory unless ``create=False``.
 
 The module is deliberately self-contained: it has no internal molcfg
 dependencies and uses only :mod:`pathlib` and :mod:`os` from the standard
@@ -63,8 +64,9 @@ def project_config_dir(
     name: str,
     *,
     environ: Mapping[str, str] | None = None,
+    create: bool = True,
 ) -> Path:
-    """Return ``~/.molcrafts/<name>/config/``, creating it if missing.
+    """Return ``~/.molcrafts/<name>/config/``.
 
     Args:
         name: Project identifier (e.g. ``"molq"``). Must be a single,
@@ -74,10 +76,13 @@ def project_config_dir(
             If ``MOLCRAFTS_HOME`` is set to a non-empty value (after
             ``str.strip``), it overrides ``~/.molcrafts`` as the base.
             Empty or whitespace-only values fall back to the default base.
+        create: When true (the default), create the directory and any missing
+            parents. Pass false to resolve the path without touching the
+            filesystem.
 
     Returns:
-        The resolved absolute path to ``<base>/<name>/config/``. The
-        directory (and any missing parents) is created with
+        The resolved absolute path to ``<base>/<name>/config/``. When
+        *create* is true the directory is created with
         ``mkdir(parents=True, exist_ok=True)``.
 
     Raises:
@@ -93,5 +98,6 @@ def project_config_dir(
     env = environ if environ is not None else os.environ
     base = _resolve_base(env)
     path = base / name / _CONFIG_SUBDIR
-    path.mkdir(parents=True, exist_ok=True)
+    if create:
+        path.mkdir(parents=True, exist_ok=True)
     return path
