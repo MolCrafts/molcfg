@@ -1,12 +1,14 @@
 name: release
 
-# A v* tag re-runs lint and the tests on the tagged tree, checks the tag
-# against pyproject.toml, builds, and publishes to PyPI (trusted publishing,
-# MolCrafts only). workflow_dispatch is the dry run: everything but the upload.
-on:
+# A v* tag re-runs test.yml (hooks, docs, tests, workflow policy) on the tagged
+# tree, checks the tag against pyproject.toml, builds, and publishes to PyPI
+# (trusted publishing, MolCrafts only). workflow_dispatch is the dry run:
+# everything but the upload.
+'on':
   push:
-    tags: ["v*"]
-  workflow_dispatch:
+    tags:
+    - v*
+  workflow_dispatch: null
 
 permissions:
   contents: read
@@ -17,37 +19,26 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  # Where this run happens, decided once: MolCrafts/molcrafts-ci/actions/ci-context.
   context:
-    name: release / context
-    runs-on: ubuntu-latest
-    outputs:
-      tier: ${{ steps.context.outputs.tier }}
-      upstream: ${{ steps.context.outputs.upstream }}
-      integration: ${{ steps.context.outputs.integration }}
-      skip-pr: ${{ steps.context.outputs.skip-pr }}
-      publish: ${{ steps.context.outputs.publish }}
-    steps:
-      - id: context
-        uses: MolCrafts/molcrafts-ci/actions/ci-context@master
-
-  lint:
-    needs: context
-    if: needs.context.outputs.skip-pr != 'true'
-    uses: ./.github/workflows/lint.yml
+    permissions:
+      contents: read
+    name: release
+    uses: MolCrafts/molcrafts-ci/.github/workflows/context.yml@3cc26f4ff1b8b6d09365d677c4a05cc8cbb70a76
 
   test:
+    name: release / test
     needs: context
     if: needs.context.outputs.skip-pr != 'true'
     uses: ./.github/workflows/test.yml
 
   build:
     name: release / build
-    needs: [context, lint, test]
+    needs: [context, test]
+    if: needs.context.outputs.skip-pr != 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
-      - uses: MolCrafts/molcrafts-ci/actions/setup-python@master
+      - uses: MolCrafts/molcrafts-ci/actions/setup-python@3cc26f4ff1b8b6d09365d677c4a05cc8cbb70a76
       - name: Tag matches the packaged version
         if: startsWith(github.ref, 'refs/tags/v')
         run: |
@@ -66,7 +57,7 @@ jobs:
   pypi:
     name: release / pypi
     needs: [context, build]
-    # A `v*` tag on MolCrafts, and nothing else: actions/ci-context decides.
+    # A `v*` tag on MolCrafts, and nothing else: the context workflow decides.
     if: needs.context.outputs.publish == 'true'
     runs-on: ubuntu-latest
     environment: pypi

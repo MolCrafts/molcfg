@@ -97,6 +97,6 @@ pytest -q
 ty check src/
 ```
 
-CI: see "CI" in CONTRIBUTING.md (lint / test / docs / release workflows).
+CI: see "CI" in CONTRIBUTING.md (test / release workflows; `test / result` is the required check).
 
 <!-- mol-agent:bootstrap:managed end -->
