@@ -1,43 +1,42 @@
 name: test
 
-# pytest in two tiers (`test / context` decides, through MolCrafts/molcrafts-ci/actions/ci-context):
+# Every check of a change, in one workflow (`test / context` decides the tier,
+# through MolCrafts/molcrafts-ci/.github/workflows/context.yml):
 #
-#   fast  a feature-branch push to MolCrafts: Linux, Python 3.12.
-#   full  every push to a fork (proven before its pull request), dev, master
-#         and master on MolCrafts, pull requests, tags and dispatches:
+#   fast  a feature-branch push to MolCrafts: pytest on Linux, Python 3.12.
+#   full  every push to a fork (proven before its pull request), dev and
+#         master on MolCrafts, pull requests, tags and dispatches: pytest on
 #         Linux, macOS and Windows on the oldest and newest Python.
-on:
+#
+# The hooks, the docs build and the workflow policy run in both tiers.
+# `test / result` is the one check branch rules require. release.yml runs
+# this file through workflow_call before it builds.
+'on':
   push:
-    branches: ["**"]
+    branches:
+    - '**'
   pull_request:
-    branches: [dev, master]
-  workflow_dispatch:
-  workflow_call:
+    branches:
+    - dev
+    - master
+  workflow_dispatch: null
+  workflow_call: null
 
 permissions:
   contents: read
 
-# One group per file, workflow, event and ref. Under workflow_call (release.yml
-# running lint/test) github.workflow and github.event_name are the caller's, so
-# a called run never shares, and so never cancels, a direct run's group.
+# One group per file, workflow, event and ref; only a feature ref cancels its
+# superseded runs. The canonical block: actions/check-workflows.
 concurrency:
   group: test-${{ github.workflow }}-${{ github.event_name }}-${{ github.ref }}
   cancel-in-progress: ${{ !contains(fromJSON('["refs/heads/dev","refs/heads/master"]'), github.ref) && !startsWith(github.ref, 'refs/tags/') }}
 
 jobs:
-  # Where this run happens, decided once: MolCrafts/molcrafts-ci/actions/ci-context.
   context:
-    name: test / context
-    runs-on: ubuntu-latest
-    outputs:
-      tier: ${{ steps.context.outputs.tier }}
-      upstream: ${{ steps.context.outputs.upstream }}
-      integration: ${{ steps.context.outputs.integration }}
-      skip-pr: ${{ steps.context.outputs.skip-pr }}
-      publish: ${{ steps.context.outputs.publish }}
-    steps:
-      - id: context
-        uses: MolCrafts/molcrafts-ci/actions/ci-context@master
+    permissions:
+      contents: read
+    name: test
+    uses: MolCrafts/molcrafts-ci/.github/workflows/context.yml@3cc26f4ff1b8b6d09365d677c4a05cc8cbb70a76
 
   python:
     name: test / python (${{ matrix.os }}, ${{ matrix.python }})
@@ -53,8 +52,55 @@ jobs:
       UV_PYTHON: ${{ matrix.python }}
     steps:
       - uses: actions/checkout@v7
-      - uses: MolCrafts/molcrafts-ci/actions/setup-python@master
+      - uses: MolCrafts/molcrafts-ci/actions/setup-python@3cc26f4ff1b8b6d09365d677c4a05cc8cbb70a76
         with:
           python-version: ${{ matrix.python }}
       - run: uv sync --extra dev
       - run: uv run pytest -q
+
+  # The commit-stage hooks of .pre-commit-config.yaml (hygiene + ruff) on every file.
+  hooks:
+    name: test / hooks
+    needs: context
+    if: needs.context.outputs.skip-pr != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: MolCrafts/molcrafts-ci/actions/setup-python@3cc26f4ff1b8b6d09365d677c4a05cc8cbb70a76
+      - run: uvx pre-commit run --all-files --show-diff-on-failure
+
+  # The site as Cloudflare Pages builds it, --strict: any warning fails.
+  # Cloudflare Pages deploys it from MolCrafts itself, so no job here deploys.
+  docs:
+    name: test / docs
+    needs: context
+    if: needs.context.outputs.skip-pr != 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: MolCrafts/molcrafts-ci/actions/setup-python@3cc26f4ff1b8b6d09365d677c4a05cc8cbb70a76
+      - run: uv sync --extra docs
+      - run: uv run zensical build --strict
+
+  # The workflows against the CI scheme: MolCrafts/molcrafts-ci/actions/check-workflows.
+  workflow-policy:
+    name: test / workflows
+    needs: context
+    if: needs.context.outputs.skip-pr != 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: MolCrafts/molcrafts-ci/actions/check-workflows@3cc26f4ff1b8b6d09365d677c4a05cc8cbb70a76
+
+  result:
+    name: test / result
+    needs: [context, python, hooks, docs, workflow-policy]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Every job succeeded or was skipped
+        env:
+          RESULTS: ${{ toJSON(needs.*.result) }}
+        run: echo "$RESULTS" | jq -e 'all(.[]; . == "success" or . == "skipped")'
